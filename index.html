@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petite Web App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+        }
+        #non {
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Est-ce que Maya ressemble à Tata, au moins un peu ?</h1>
+
+<button id="oui">Oui</button>
+<button id="non">Non</button>
+
+<p id="result" style="margin-top: 30px; font-size: 20px;"></p>
+
+<script>
+    const nonButton = document.getElementById("non");
+    const ouiButton = document.getElementById("oui");
+    const result = document.getElementById("result");
+
+    // Make the "Non" button move randomly when hovered
+    nonButton.addEventListener("mouseover", () => {
+        const x = Math.random() * (window.innerWidth - nonButton.offsetWidth);
+        const y = Math.random() * (window.innerHeight - nonButton.offsetHeight);
+        nonButton.style.left = `${x}px`;
+        nonButton.style.top = `${y}px`;
+    });
+
+    // Display the message when the "Oui" button is clicked
+    ouiButton.addEventListener("click", () => {
+        result.textContent = "Voilà, je le savais !";
+    });
+</script>
+
+</body>
+</html>
