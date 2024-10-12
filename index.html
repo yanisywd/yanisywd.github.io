@@ -22,12 +22,40 @@
         #non {
             position: absolute;
         }
+        /* Wave animation for the text */
+        .wave {
+            display: inline-block;
+        }
+        .wave span {
+            display: inline-block;
+            font-size: 24px;
+            animation: wave-animation 1.5s ease-in-out infinite;
+        }
+        .wave span:nth-child(1) { animation-delay: 0s; }
+        .wave span:nth-child(2) { animation-delay: 0.1s; }
+        .wave span:nth-child(3) { animation-delay: 0.2s; }
+        .wave span:nth-child(4) { animation-delay: 0.3s; }
+        .wave span:nth-child(5) { animation-delay: 0.4s; }
+        .wave span:nth-child(6) { animation-delay: 0.5s; }
+        .wave span:nth-child(7) { animation-delay: 0.6s; }
+        .wave span:nth-child(8) { animation-delay: 0.7s; }
+        .wave span:nth-child(9) { animation-delay: 0.8s; }
+        .wave span:nth-child(10) { animation-delay: 0.9s; }
+        .wave span:nth-child(11) { animation-delay: 1s; }
+
+        @keyframes wave-animation {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
     </style>
 </head>
 <body>
 
-<h1>Est-ce que Maia ressemble au moins un peu à Tata ?</h1>
-
+<h1>Est-ce que Maya ressemble au moins un peu à Tata ?</h1>
 
 <button id="oui">Oui</button>
 <button id="non">Non</button>
@@ -47,11 +75,13 @@
         nonButton.style.top = `${y}px`;
     });
 
-    // Display the message when the "Oui" button is clicked
+    // Display the wave animation text when "Oui" button is clicked
     ouiButton.addEventListener("click", () => {
-        result.textContent = "Voilà, je le savais !";
+        const text = "Voilà, je le savais !";
+        result.innerHTML = `<div class="wave">${text.split('').map((char, i) => `<span>${char}</span>`).join('')}</div>`;
     });
 </script>
 
 </body>
 </html>
+
