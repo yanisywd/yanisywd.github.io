@@ -13,16 +13,18 @@
         h1 {
             margin-bottom: 30px;
         }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Espace entre les boutons */
+        }
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
-            position: relative;
         }
         #genie {
-            position: absolute;
-            top: 100px;
-            left: 50px;
+            position: relative;
         }
     </style>
 </head>
@@ -30,8 +32,10 @@
 
 <h1> Est-ce que Maia est une génie ou elle est juste complètement folle ?</h1>
 
-<button id="completement_folle">complètement folle</button>
-<button id="genie">génie</button>
+<div class="button-container">
+    <button id="completement_folle">complètement folle</button>
+    <button id="genie">génie</button>
+</div>
 
 <p id="result" style="margin-top: 30px; font-size: 20px;"></p>
 
@@ -40,10 +44,11 @@
     const ouiButton = document.getElementById("completement_folle");
     const result = document.getElementById("result");
 
-    // Faire bouger le bouton "genie" aléatoirement quand il est survolé
+    // Faire bouger le bouton "génie" aléatoirement quand il est survolé
     nonButton.addEventListener("mouseover", () => {
         const x = Math.random() * (window.innerWidth - nonButton.offsetWidth);
         const y = Math.random() * (window.innerHeight - nonButton.offsetHeight);
+        nonButton.style.position = "absolute"; // Changer la position pour qu'il puisse bouger
         nonButton.style.left = `${x}px`;
         nonButton.style.top = `${y}px`;
     });
