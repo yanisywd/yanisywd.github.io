@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<meta property="og:image" content="https://yanisywd.github.io/assets/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Reading scanned farm records, Yanis Yahia Ouahmed</title>
+<meta name="description" content="A vision LLM pipeline that turned 6,890 scanned pages from 230 farm record books into 1,498 checked database records for carbon reports.">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Yanis Yahia Ouahmed</a>
+    <nav aria-label="Main">
+      <a class="hide-s" href="../index.html#work">Work</a>
+      <a class="hide-s" href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+      <a class="btn small" href="mailto:yanistechside@gmail.com">Email me</a>
+    </nav>
+  </div>
+</header>
+
+<main class="detail wrap">
+  <a class="back" href="../index.html#work"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All projects</a>
+  <div class="d-head">
+    <div class="kicker"><span class="tag live">In production</span><span class="tag">Vision LLM</span><span class="tag">Retrieval</span></div>
+    <h1>Reading scanned farm records</h1>
+    <p class="lead">Farmers keep years of fertiliser and field operations in paper record books. A client needed them as clean database records for carbon reports. I built the pipeline: a vision LLM reads each page, and code checks everything it returns.</p>
+  </div>
+  <figure class="figure">
+    <div class="stage" data-widget="docs" data-mode="auto"></div>
+    <figcaption><span>Illustration with synthetic values: the real pages are client data. The steps are the real ones.</span><button class="btn ghost small" type="button" data-replay>Replay</button></figcaption>
+  </figure>
+  <dl class="facts">
+    <div><dt>Status</dt><dd>In production. The records feed the client’s carbon reports.</dd></div>
+    <div><dt>My role</dt><dd>The whole pipeline, from page images to database records</dd></div>
+    <div><dt>Stack</dt><dd>Python, Gemini 3.1 Pro (vision), scikit-learn, PostgreSQL</dd></div>
+    <div><dt>Data</dt><dd>230 scanned record books, 6,890 pages</dd></div>
+  </dl>
+
+  <section class="d-sec">
+    <h2>How it works</h2>
+    <div class="prose">
+      <ol>
+        <li><b>Read.</b> Each page image goes to a vision LLM with a strict JSON schema: plot, crop, product, dose, unit and date. Pages with no data are skipped (1,779 of 6,890).</li>
+        <li><b>Match.</b> Crop and product names are messy, like “Ammo 33,5”. Hybrid retrieval finds candidates: TF-IDF on characters and words, fuzzy and substring search, and numeric cues, fused with Reciprocal Rank Fusion. An LLM then re-ranks the top 30 among 13,302 catalogue products.</li>
+        <li><b>Check.</b> Rules remove duplicates, fix units and flag outliers. Yields are re-read from the PDF text layer when there is one.</li>
+        <li><b>Load.</b> Records are written in the production schema. Before each delivery, a local replay on the exact schema must give zero field differences.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Results</h2>
+    <div class="prose">
+      <div class="stats">
+        <div class="stat"><b>6,890</b><span>pages read from 230 record books</span></div>
+        <div class="stat"><b>1,498</b><span>checked records for 88 farms</span></div>
+        <div class="stat"><b>3,138</b><span>duplicate plot entries removed in 112 books, plus 618 duplicate operations</span></div>
+        <div class="stat"><b>0</b><span>field differences in the replay before delivery</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Design choices</h2>
+    <div class="prose">
+      <ul>
+        <li><b>Fixed steps, not an agent.</b> Each step can be tested and replayed. This matters when the output feeds carbon reports.</li>
+        <li><b>The LLM reads, the code decides.</b> The model only fills the schema and ranks candidates. Rules decide what goes into the database.</li>
+        <li><b>Every client remark becomes a check.</b> One review round found 94 matching anomalies. I fixed them and added a quality check that runs before every push.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Limits</h2>
+    <div class="prose">
+      <ul>
+        <li>The checks catch duplicates, units and outliers, not every misread digit. Client review rounds caught the rest.</li>
+        <li>Some data was never written in the books, like yields or cover crop biomass, so a few reports stay incomplete.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Code</h2>
+    <div class="prose">
+      <p>The code is proprietary to MyEasyFarm. I can walk through the architecture and evaluation on request.</p>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="Next project"><a href="cloud-gaps.html"><span class="l">Back to the first project</span><span class="t2">Filling cloud gaps in satellite data <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></nav>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Yanis Yahia Ouahmed</span><span>Every figure uses real data, except the document illustration.</span></div>
+</footer>
+<script src="../assets/data.js"></script>
+<script src="../assets/widgets.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<meta property="og:image" content="https://yanisywd.github.io/assets/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Recognising crops from space, Yanis Yahia Ouahmed</title>
+<meta name="description" content="ESA WorldCereal tested in 7 regions of 6 countries without retraining, with a confidence rule. 98.8% of confident answers right on 3,585 fields near Reims.">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Yanis Yahia Ouahmed</a>
+    <nav aria-label="Main">
+      <a class="hide-s" href="../index.html#work">Work</a>
+      <a class="hide-s" href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+      <a class="btn small" href="mailto:yanistechside@gmail.com">Email me</a>
+    </nav>
+  </div>
+</header>
+
+<main class="detail wrap">
+  <a class="back" href="../index.html#work"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All projects</a>
+  <div class="d-head">
+    <div class="kicker"><span class="tag live">In production</span><span class="tag">Foundation model</span><span class="tag">7 regions, 6 countries</span></div>
+    <h1>Recognising crops from space</h1>
+    <p class="lead">Which crop grows in each field? I tested ESA’s WorldCereal, a model pretrained on millions of labelled fields, in 7 regions of 6 countries without retraining it. Then I added a confidence gate: it commits only above a threshold and routes the rest to human review.</p>
+  </div>
+  <figure class="figure">
+    <div class="stage" data-widget="crop" data-mode="auto"></div>
+    <figcaption><span>340 real fields near Reims, 2025 season. First the monthly greenness of each field, then the crop that the model predicts. Grey hatching: confidence below 0.9, sent to review.</span><button class="btn ghost small" type="button" data-replay>Replay</button></figcaption>
+  </figure>
+  <dl class="facts">
+    <div><dt>Status</dt><dd>In production at MyEasyFarm, first deployed on 7,020 fields near Reims</dd></div>
+    <div><dt>My role</dt><dd>Input pipeline, evaluation, decision rule and demo</dd></div>
+    <div><dt>Stack</dt><dd>Python, PyTorch, WorldCereal (Presto)</dd></div>
+    <div><dt>Data</dt><dd>Sentinel-2, Sentinel-1, Copernicus elevation and NASA POWER weather, all open data</dd></div>
+  </dl>
+
+  <section class="d-sec">
+    <h2>How it works</h2>
+    <div class="prose">
+      <ol>
+        <li><b>Open data.</b> For each region, 12 monthly composites of Sentinel-2 (optical) and Sentinel-1 (radar) at 20 m, plus elevation and weather. The reference pipeline runs this step on a cloud platform. I re-implemented it on open public catalogues, so the whole chain runs on one laptop.</li>
+        <li><b>Prediction.</b> 16 random pixels per field, at least 20 m from the border. WorldCereal (a Presto encoder and a crop head) gives one of 24 crop classes per pixel, and the answers are averaged per field.</li>
+        <li><b>Decision.</b> Accept the answer when the confidence is 0.9 or more. Send the other fields to review.</li>
+        <li><b>Option.</b> Where last year’s declarations are public, a small regional classifier gives a second opinion.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Results</h2>
+    <div class="prose">
+      <div class="stats">
+        <div class="stat"><b>98.8%</b><span>of confident answers right, on 3,585 fields near Reims in 2025</span></div>
+        <div class="stat"><b>97 to 99%</b><span>of confident answers right in the 5 regions the model knew</span></div>
+        <div class="stat"><b>90%</b><span>of fields right with data until the end of June 2025, before harvest</span></div>
+        <div class="stat"><b>75 s</b><span>to classify 9,100 fields on a CPU, once the images are ready</span></div>
+      </div>
+      <div class="tw">
+        <table class="t">
+          <thead><tr><th>Region (year)</th><th class="opt">Seen in training</th><th class="n">Accuracy</th><th class="n">Kept at 0.9</th><th class="n">Right when kept</th></tr></thead>
+          <tbody>
+            <tr><td>Reims, France (2024)</td><td class="opt">Other years</td><td class="n">0.93</td><td class="n">70%</td><td class="n w">99%</td></tr>
+            <tr><td>Lolland, Denmark (2024)</td><td class="opt">Other years</td><td class="n">0.93</td><td class="n">65%</td><td class="n w">99%</td></tr>
+            <tr><td>Iowa, USA (2024)</td><td class="opt">Other years</td><td class="n">0.92</td><td class="n">80%</td><td class="n w">98%</td></tr>
+            <tr><td>North Dakota, USA (2024)</td><td class="opt">Other years</td><td class="n">0.91</td><td class="n">72%</td><td class="n w">97%</td></tr>
+            <tr><td>Flevoland, Netherlands (2025)</td><td class="opt">Other years</td><td class="n">0.78</td><td class="n">57%</td><td class="n w">99%</td></tr>
+            <tr><td>Seeland, Switzerland (2025)</td><td class="opt">No</td><td class="n">0.75</td><td class="n">40%</td><td class="n w">96%</td></tr>
+            <tr><td>Val di Chiana, Italy (2023)</td><td class="opt">No</td><td class="n">0.67</td><td class="n">20%</td><td class="n w">90%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Kept at 0.9: the share of fields with a confidence of 0.9 or more. The other fields go to review. The model saw the first 5 regions in other years, and never saw Switzerland and Italy.</p>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>What I found</h2>
+    <div class="prose">
+      <ul>
+        <li><b>A probable bug in WorldCereal’s class tables.</b> The code for “barley, unspecified” points to “wheat”. This explains why 28 of 29 barley fields in North Dakota came out as wheat, while European barley was 96 to 97% right.</li>
+        <li><b>Some confident errors are label errors.</b> Three Reims fields declared as winter peas look like sunflower from space: their greenness peaks in July and August. After a very wet spring, the farmer probably sowed a summer crop instead.</li>
+        <li><b>An input bug.</b> A double reflectance correction held Reims at 0.17 accuracy. Once fixed, it reached 0.93.</li>
+        <li><b>Local labels help where the model is weak.</b> A classifier trained on last year’s declarations took Flevoland from 0.78 to 0.88, and to 0.895 with the confidence rule on top.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Limits</h2>
+    <div class="prose">
+      <ul>
+        <li>Permanent and temporary grassland look the same from space.</li>
+        <li>Fields under about 1 ha are not reliable.</li>
+        <li>In a region unlike the training data, the 0.9 rule is less safe (90% in Tuscany), so each new region needs a check before use.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Code</h2>
+    <div class="prose">
+      <p>The code is proprietary to MyEasyFarm. I can walk through the architecture and evaluation on request.</p>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="Next project"><a href="scanned-records.html"><span class="l">Next project</span><span class="t2">Reading scanned farm records <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></nav>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Yanis Yahia Ouahmed</span><span>Every figure uses real data, except the document illustration.</span></div>
+</footer>
+<script src="../assets/data.js"></script>
+<script src="../assets/widgets.js"></script>
+</body>
+</html>

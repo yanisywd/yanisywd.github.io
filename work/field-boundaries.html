@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<meta property="og:image" content="https://yanisywd.github.io/assets/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Field boundaries from one click, Yanis Yahia Ouahmed</title>
+<meta name="description" content="One click inside a field returns its outline: SAM2 with a multi-prompt stability vote that rejects texture-locked masks. Median IoU 0.80 on 15 random fields.">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Yanis Yahia Ouahmed</a>
+    <nav aria-label="Main">
+      <a class="hide-s" href="../index.html#work">Work</a>
+      <a class="hide-s" href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+      <a class="btn small" href="mailto:yanistechside@gmail.com">Email me</a>
+    </nav>
+  </div>
+</header>
+
+<main class="detail wrap">
+  <a class="back" href="../index.html#work"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All projects</a>
+  <div class="d-head">
+    <div class="kicker"><span class="tag live">In production</span><span class="tag">Segmentation</span><span class="tag">SAM2</span></div>
+    <h1>Field boundaries from one click</h1>
+    <p class="lead">A farmer clicks once inside a field, and the system returns its outline. SAM2, Meta’s general segmentation model, produces the candidate masks. Its highest-scored mask often locks onto a texture inside the field, so I added a multi-prompt stability vote that rejects it.</p>
+  </div>
+  <figure class="figure">
+    <div class="stage" data-widget="field" data-mode="auto"></div>
+    <figcaption><span>A real run on a field near Chartres, France. SAM2’s top-scored mask (score 0.94) is a texture zone inside the field: IoU 0.32 with the declared field. The stability vote keeps another mask: IoU 0.97.</span><button class="btn ghost small" type="button" data-replay>Replay</button></figcaption>
+  </figure>
+  <dl class="facts">
+    <div><dt>Status</dt><dd>In production at MyEasyFarm, as an interactive map tool</dd></div>
+    <div><dt>My role</dt><dd>Design, code and evaluation</dd></div>
+    <div><dt>Stack</dt><dd>Python, PyTorch, SAM 2.1, rasterio, Shapely</dd></div>
+    <div><dt>Data</dt><dd>IGN aerial photos (20 cm) and declared parcels (RPG), France</dd></div>
+  </dl>
+
+  <section class="d-sec">
+    <h2>How it works</h2>
+    <div class="prose">
+      <ol>
+        <li><b>Click.</b> The system gets the coordinates, the declared parcel around them (RPG, through the IGN API) and a 20 cm aerial photo of the area (IGN Géoplateforme).</li>
+        <li><b>Prompt.</b> SAM 2.1 gets the click as a point prompt and returns 3 candidate masks with scores.</li>
+        <li><b>Stability vote.</b> I re-prompt at 6 points within 30 m of the click and keep the candidate that stays the same across prompts. Texture traps, like soil strips or growth zones, change from one prompt to the next, so they lose.</li>
+        <li><b>Refine.</b> A second pass refines the winner. When a declared parcel exists, a box prompt from its bounds snaps the declared shape to the visible edges.</li>
+        <li><b>Output.</b> A clean polygon in GeoJSON, with its area in hectares.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Results</h2>
+    <div class="prose">
+      <div class="stats">
+        <div class="stat"><b>0.80</b><span>median IoU when the declared parcel guides it</span></div>
+        <div class="stat"><b>80%</b><span>of fields at IoU 0.70 or more, guided</span></div>
+        <div class="stat"><b>0.54</b><span>median IoU from the click alone</span></div>
+        <div class="stat"><b>3 to 5 s</b><span>per field on a laptop GPU, once the model is loaded</span></div>
+      </div>
+      <div class="tw">
+        <table class="t">
+          <thead><tr><th>Mode</th><th class="n">Mean IoU</th><th class="n">Median IoU</th><th class="n">IoU 0.70 or more</th></tr></thead>
+          <tbody>
+            <tr><td>Click only, SAM 2.1 small</td><td class="n">0.63</td><td class="n">0.54</td><td class="n">40%</td></tr>
+            <tr><td>Click only, SAM 2.1 large</td><td class="n">0.65</td><td class="n">0.64</td><td class="n">47%</td></tr>
+            <tr><td>Guided by the declared parcel, small</td><td class="n w">0.77</td><td class="n w">0.80</td><td class="n w">80%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">15 random fields of 0.5 ha or more in 5 French regions, compared with the 2024 declarations. IoU (intersection over union) measures the overlap of two shapes: 1 is a perfect match. A larger model is not the lever. The remaining errors are boundaries that exist on paper but not on the ground, and neighbouring fields of the same crop.</p>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Limits</h2>
+    <div class="prose">
+      <ul>
+        <li>The RPG is a declaration, not visual truth. One uniform block is often several declared strips with no visible edge, so IoU against it understates the visual quality.</li>
+        <li>Aerial photos are refreshed every 3 to 4 years, so a photo can be older than the declaration.</li>
+        <li>Neighbouring fields of the same crop, separated by a thin path, can merge. Next step: fine-tune a field model (AI4Boundaries or Fields of the World) and keep SAM2 as the interactive refiner.</li>
+        <li>Outside France there is no RPG. The system can use FTW Global, an open map of 1.6 billion field polygons, as the guide instead.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Code</h2>
+    <div class="prose">
+      <p>The code is proprietary to MyEasyFarm. I can walk through the architecture and evaluation on request.</p>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="Next project"><a href="crop-recognition.html"><span class="l">Next project</span><span class="t2">Recognising crops from space <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></nav>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Yanis Yahia Ouahmed</span><span>Every figure uses real data, except the document illustration.</span></div>
+</footer>
+<script src="../assets/data.js"></script>
+<script src="../assets/widgets.js"></script>
+</body>
+</html>

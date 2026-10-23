@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<meta property="og:image" content="https://yanisywd.github.io/assets/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Filling cloud gaps in satellite data, Yanis Yahia Ouahmed</title>
+<meta name="description" content="A lightweight radar-guided temporal CNN that reconstructs LAI curves under cloud cover, with a calibrated error bar. In production.">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Yanis Yahia Ouahmed</a>
+    <nav aria-label="Main">
+      <a class="hide-s" href="../index.html#work">Work</a>
+      <a class="hide-s" href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+      <a class="btn small" href="mailto:yanistechside@gmail.com">Email me</a>
+    </nav>
+  </div>
+</header>
+
+<main class="detail wrap">
+  <a class="back" href="../index.html#work"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All projects</a>
+  <div class="d-head">
+    <div class="kicker"><span class="tag live">In production</span><span class="tag">Time series</span><span class="tag">Self-supervised</span></div>
+    <h1>Filling cloud gaps in satellite data</h1>
+    <p class="lead">Optical satellites cannot see through clouds, so a field’s growth curve has gaps of weeks or months. I built a lightweight radar-guided temporal CNN that reconstructs these gaps and attaches a calibrated error bar to every reconstructed point.</p>
+  </div>
+  <figure class="figure">
+    <div class="stage" data-widget="lai" data-mode="auto"></div>
+    <figcaption><span>One field in Vendée, 2022. The model never saw this region. As a test, I hid 103 days of real observations, like a long cloudy spell. Error on the hidden points (RMSE, in LAI units): 0.50 for the model, 1.48 for a straight line.</span><button class="btn ghost small" type="button" data-replay>Replay</button></figcaption>
+  </figure>
+  <dl class="facts">
+    <div><dt>Status</dt><dd>In production, as a FastAPI service that MyEasyFarm’s carbon model calls</dd></div>
+    <div><dt>My role</dt><dd>Data pipeline, model, training, evaluation and API</dd></div>
+    <div><dt>Stack</dt><dd>Python, PyTorch, NumPy, FastAPI</dd></div>
+    <div><dt>Data</dt><dd>Sentinel-1 radar and Sentinel-2 optical, open data</dd></div>
+  </dl>
+
+  <section class="d-sec">
+    <h2>The problem</h2>
+    <div class="prose">
+      <p>LAI (leaf area index) is the leaf area per unit of ground: about 0 on bare soil, 6 or more in a dense crop. Its curve over the year shows emergence, growth, peak and harvest. It comes from Sentinel-2, an optical satellite, and clouds block it. Over a year, this leaves gaps of weeks to months, and the downstream carbon model cannot run on a curve with gaps.</p>
+      <p>Sentinel-1 is a radar satellite. It sends its own microwaves, so it measures through clouds on every pass. Radar does not measure LAI, but its backscatter tracks crop structure. The model uses it to constrain the reconstruction.</p>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>What I built</h2>
+    <div class="prose">
+      <ul>
+        <li><b>Input.</b> One year per field on a 5-day grid (74 steps), with 9 channels: the visible LAI values and their mask, radar VV and VH and their difference, and 4 seasonal terms.</li>
+        <li><b>Model.</b> A bidirectional dilated temporal CNN. Its 5 residual blocks use dilations from 1 to 16, so it sees the whole year. 124k parameters, 0.5 MB, fast on a CPU. It predicts a value and a variance at every step.</li>
+        <li><b>Training.</b> Self-supervised. At every step, I hide a random block of 15 to 60% of the year and 5% of random points. The loss (Gaussian negative log-likelihood) counts only the hidden points, so no external labels are needed.</li>
+        <li><b>Uncertainty.</b> An ensemble of 3 seeds. The error bar combines the predicted variance and the spread between seeds, and one conformal factor calibrates it.</li>
+        <li><b>Data.</b> 26,559 fields, 140 site-years, 28 regions in France, Spain and Italy, 2021 to 2025. LAI comes from the ESA SNAP algorithm on Sentinel-2.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>How I tested it</h2>
+    <div class="prose">
+      <p>Each test hides real clear-sky values, rebuilds them and compares. The baseline is linear interpolation, the usual fix in production pipelines.</p>
+      <ul>
+        <li><b>Leave one region out:</b> train without a region, then test on it.</li>
+        <li><b>Radar ablation:</b> the same points, with and without radar.</li>
+        <li><b>Calibration:</b> the share of real errors inside ±1σ and ±2σ, on fields that were not used for training.</li>
+        <li><b>New test, October 2026:</b> 6 French sites from 2022 that were never in training, with the middle 40% of the season hidden (95 to 113 days).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Results</h2>
+    <div class="prose">
+      <div class="stats">
+        <div class="stat"><b>6 of 6</b><span>unseen sites where the model beats interpolation (2022 test)</span></div>
+        <div class="stat"><b>75.9%</b><span>of 212 unseen fields get a lower error. The median error is 17.7% lower.</span></div>
+        <div class="stat"><b>+0.14 R²</b><span>from radar on average, and up to +0.375 in the longest gaps</span></div>
+        <div class="stat"><b>67.6%</b><span>of true values fall inside ±1σ (68% expected)</span></div>
+      </div>
+      <div class="tw">
+        <table class="t">
+          <thead><tr><th>Site, 2022</th><th class="n">Fields</th><th class="n">R², straight line</th><th class="n">R², model</th></tr></thead>
+          <tbody>
+            <tr><td>Normandy</td><td class="n">251</td><td class="n">0.14</td><td class="n w">0.73</td></tr>
+            <tr><td>Vendée</td><td class="n">181</td><td class="n">0.00</td><td class="n w">0.49</td></tr>
+            <tr><td>Charente</td><td class="n">130</td><td class="n">0.24</td><td class="n w">0.35</td></tr>
+            <tr><td>Brie</td><td class="n">320</td><td class="n">0.04</td><td class="n w">0.10</td></tr>
+            <tr><td>Alsace</td><td class="n">115</td><td class="n">−0.14</td><td class="n w">0.06</td></tr>
+            <tr><td>Limagne</td><td class="n">199</td><td class="n">−0.17</td><td class="n w">−0.08</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">R² on all hidden points of each site: 1 is perfect, and below 0 is worse than a flat line at the mean. Gaps of 3 to 4 months in the growing season are hard for every method. The model stays ahead on every site.</p>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Limits</h2>
+    <div class="prose">
+      <ul>
+        <li>Gaps longer than 80 days stay hard: R² is below 0 for every method. There, the useful output is a constrained curve with an honest error bar, not an exact value.</li>
+        <li>Italy (Po Valley, flooded rice) is the one held-out region where the model does not beat interpolation.</li>
+        <li>The error bar per point comes mostly from a hand-set blend by gap depth and one global factor fitted on France, 2022. Learning it per point is open work.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Related work</h2>
+    <div class="prose">
+      <p>The closest published work is Pipia et al. (2019, Remote Sensing of Environment): Gaussian processes that fuse radar and optical data for LAI, per pixel and costly to run. FuseTS and CropSAR (ESA AI4FOOD) fill NDVI from radar, without an error bar and under a non-commercial licence. UnCRtainTS removes clouds from whole images with an uncertainty, on a GPU.</p>
+      <p>In my review, I found no open, lightweight model that rebuilds field-level LAI from radar with a calibrated error bar.</p>
+    </div>
+  </section>
+
+  <section class="d-sec">
+    <h2>Code</h2>
+    <div class="prose">
+      <p>The code is proprietary to MyEasyFarm. I can walk through the architecture and evaluation on request.</p>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="Next project"><a href="field-boundaries.html"><span class="l">Next project</span><span class="t2">Field boundaries from one click <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></nav>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Yanis Yahia Ouahmed</span><span>Every figure uses real data, except the document illustration.</span></div>
+</footer>
+<script src="../assets/data.js"></script>
+<script src="../assets/widgets.js"></script>
+</body>
+</html>
